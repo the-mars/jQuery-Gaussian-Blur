@@ -1,9 +1,9 @@
 (function(){
 
 	var ua = navigator.userAgent;
-	var isLtIE8 = ~ua.indexOf('MSIE 6')	|| ~ua.indexOf('MSIE 7') || ~ua.indexOf('MSIE 8'); //is it old IE
+	var isOldIE = ua.match(/[\(;]\s*MSIE [6-9]\b/i); //is it old IE
 
-	//mitcro lib that creates SVG elements and adds attributes for it
+	//micro lib that creates SVG elements and adds attributes for it
 	var SVG = {
 		
 		//namespaces
@@ -32,19 +32,50 @@
 			return element;
 		}
 	}
+	
+	// Add console object if not exists - in IE without dev tools open
+	try {
+		if (typeof console == 'undefined')
+			var console = {
+				_lines	: '',
+				log		: function(param) {	try {
+						this._lines += param.toString() + '\n';
+					} catch(err) { } },
+				show	: function() { alert(this._lines); }
+			};
+	} catch(error) {}
 
 	jQuery.fn.gaussianBlur = function(args){
 		
 		var args = $.extend({
 			deviation: 1, //intensity of blur 
-			imageClass: 'blurImage'	//the class of original image
+			imageClass: 'blurImage',	//the class of original image
+			doDeleteOrig: false	//delete or keep original image
 		}, args);
 		
 		$(this).each(function(){
 			var $this = $(this);
 			
-			var $img = $this.children('img.'+args.imageClass); //image that should be blurred
-			if(!$img.length) return;
+			$this.css({ //CSS for a smooth implementation
+				display: 'inline-block',
+				position: 'relative',
+				overflow:'hidden'
+			});
+			
+			var $img = $this.children('img'+(args.imageClass ? '.'+args.imageClass : '')); //image that should be blurred
+			if(!$img.size() == 1) {
+				console.log('GaussianBlur: exiting because ' + img.size() + ' images are found in the container specified below:');
+				console.log($this[0]);
+				return;
+			}
+			
+			$img.css({ //CSS for a smooth implementation
+				position: 'absolute',
+				top: '0px',
+				left: '0px',
+				opacity: 0,
+				zIndex: 1
+			});
 			
 			var blurredId = Math.random(); //unique id for blurred image
 			var imgSrc = $img.attr('src'); //original image's path
@@ -56,7 +87,7 @@
 														//problem is that we can't add any class to SVG element
 			$this.width(imgWidth).height(imgHeight);
 			
-			if(!isLtIE8) { //if it modern browser
+			if(!isOldIE) { //if it modern browser
 				
 				svg = SVG.createElement('svg', { //our SVG element 
 					xmlns: SVG.svgns,
@@ -90,18 +121,23 @@
 				svg.appendChild(image); //adding an element of an image into the SVG
 				this.appendChild(svg); //adding an SVG element into span which contains the original image
 				
-			} else { //if it's IE6,7,8
+			} else { //if it's IE6,7,8,9
 				$img.clone().css({ //cloning of the original image and adding some attributes
+					//do not start with opacity=0
+					opacity: ($img.css('opacity') == 0) ? 1 : $img.css('opacity'),
 					//filter property; here the intensity of blur multipied by two is around equal to the intensity in common browsers.   
-					filter: 'progid:DXImageTransform.Microsoft.Blur(pixelradius=' + args.deviation*2 + ')',
+					filter: 'progid:DXImageTransform.Microsoft.blur(MakeShadow=\'false\',PixelRadius=\'' + (args.deviation*2) + '\',ShadowOpacity=\'0.75\')',
 					//aligning of the blurred image by vertical and horizontal
 					top: -args.deviation*2, 
 					left: -args.deviation*2,
 					//somehow the heights and the widths of the image are unequal; fixing
 					width: imgWidth,
-					height: imgHeight
+					height: imgHeight,
+					zIndex: 0
 				}).removeClass(args.imageClass).attr('id', 'blurred'+blurredId).appendTo(this);
 			}
+			if (args.doDeleteOrig)
+				$img.remove();
 		});
 		
 	}
