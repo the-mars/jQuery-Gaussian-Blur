@@ -5,12 +5,18 @@
 	<script type="text/javascript" src="jquery.gaussian-blur.js"></script>
 	<script type="text/javascript">
 		jQuery(window).load(function(){ //we're using load because if we'll use ready then we can't get the image size
-			$('.blurImageContainer .blurImage').css({opacity: 0});
-			$('.blurImageContainer').gaussianBlur({
-				deviation: 3, //level of blur
-				imageClass: 'blurImage'	//class of the original image (just in case)	
+			// this item will remain blurred and does not have hover effects
+			$('.blurImageContainerNoHover').gaussianBlur({
+				deviation: 2, //level of blur
+				imageClass: 'blurImage',	//class of the original image (just in case)	
+				doDeleteOrig: true
 			});
 			
+			// these items will be blurred and show the original image on hover
+			$('.blurImageContainer').gaussianBlur({
+				deviation: 7, //level of blur
+				imageClass: 'blurImage'	//class of the original image (just in case)	
+			});
 			$('.blurImageContainer').hover(function(){
 				$('.blurImage', this).animate({opacity: 1}, 500);
 			},function(){
@@ -20,22 +26,13 @@
 		});
 	</script>
 	<style>
-	
-	/* Required styles */
-	.blurImageContainer {display: inline-block; position: relative; overflow:hidden;}
-	.blurImageContainer > .blurImage {position: absolute; top:0; left:0; z-index:1;}
-	.blurImageContainer > [id^="blurred"] {position: absolute; top:0; left:0; z-index:0;}
-	/* /Required styles */
-	
-	
-	
 	div#root{max-width:1000px; margin:0 auto; text-align:center;}
 	</style>
 </head>
 <body>
 
 	<div id="root">
-		<span class="blurImageContainer">
+		<span class="blurImageContainerNoHover">
 			<img class="blurImage" src="https://lh6.googleusercontent.com/-QojF49Z_quw/TeiKe4FqWAI/AAAAAAAAF3g/CZghkir946U/s144-p/032.JPG">
 		</span>
 		<span class="blurImageContainer">
